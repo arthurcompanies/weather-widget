@@ -1,90 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Weather Widget</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f3f3f3;
-      margin: 0;
-      padding: 10px;
+      background-color: #f5f5f5;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
 
     .weather-card {
       background: white;
-      border-radius: 8px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 10px 15px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       text-align: center;
-      width: 300px;
+      width: 180px;
     }
 
     .location {
-      font-size: 1.2em;
+      font-size: 1.1em;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     .temp {
-      font-size: 2.5em;
+      font-size: 1.8em;
       font-weight: bold;
-      color: #0078D7;
-      margin-bottom: 5px;
+      color: #FFA626; /* Orange */
+      margin-bottom: 4px;
     }
 
     .description {
-      font-size: 1em;
+      font-size: 0.9em;
       color: #555;
+      margin-top: 4px;
+    }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      margin: 6px auto;
     }
   </style>
 </head>
 <body>
-  <div class="weather-card">
-    <div class="location">Loading...</div>
-    <div class="temp">--°F</div>
-    <div class="description">---</div>
+  <div class="weather-card" id="weather">
+    Loading weather...
   </div>
 
   <script>
-    const apiKey = "b83ae8f7817979486137963421d3efed";
+    async function fetchWeather(lat, lon) {
+      const apiKey = 'b83ae8f7817979486137963421d3efed'; // Your OpenWeatherMap API key
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${apiKey}`;
 
-    // Get user location based on IP
-    fetch("https://ipapi.co/json")
-      .then(response => response.json())
-      .then(locationData => {
-        const lat = locationData.latitude;
-        const lon = locationData.longitude;
-        const city = locationData.city;
+      const response = await fetch(url);
+      const data = await response.json();
 
-        document.querySelector(".location").textContent = city;
+      const city = data.name;
+      const temp = Math.round(data.main.temp);
+      const description = data.weather[0].description;
+      const icon = data.weather[0].icon;
 
-        // Fetch weather data
-        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`)
-          .then(response => response.json())
-          .then(weatherData => {
-            const temp = Math.round(weatherData.main.temp);
-            const description = weatherData.weather[0].description;
+      document.getElementById('weather').innerHTML = `
+        <div class="location">${city}</div>
+        <img class="icon" src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
+        <div class="temp">${temp}°F</div>
+        <div class="description">${description}</div>
+      `;
+    }
 
-            document.querySelector(".temp").textContent = `${temp}°F`;
-            document.querySelector(".description").textContent = description.charAt(0).toUpperCase() + description.slice(1);
-          })
-          .catch(error => {
-            console.error("Weather API error:", error);
-            document.querySelector(".description").textContent = "Weather unavailable";
-          });
-      })
-      .catch(error => {
-        console.error("Location error:", error);
-        document.querySelector(".location").textContent = "Location unavailable";
-        document.querySelector(".description").textContent = "Weather unavailable";
-      });
+    function showError() {
+      document.getElementById('weather').innerText = "Weather unavailable";
+    }
+
+    function getLocationAndFetchWeather() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            fetchWeather(position.coords.latitude, position.coords.longitude);
+          },
+          error => {
+            console.error('Geolocation error:', error);
+            showError();
+          }
+        );
+      } else {
+        showError();
+      }
+    }
+
+    getLocationAndFetchWeather();
   </script>
 </body>
 </html>
+
 
 
